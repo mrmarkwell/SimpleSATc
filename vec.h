@@ -1,5 +1,7 @@
 /**************************************************************************************************
 SimpleSATc -- Copyright (c) 2012, Matthew Markwell
+   Code is from MiniSat-C v1.14.1.
+   Used with permission, as stated below.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

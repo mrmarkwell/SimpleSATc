@@ -1,5 +1,7 @@
 /**************************************************************************************************
 SimpleSATc -- Copyright (c) 2012, Matthew Markwell
+   Parser code is from MiniSat-C v1.14.1.
+   Used with permission, as stated below.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -17,8 +19,7 @@ DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 **************************************************************************************************/
 
-/// INCLUDES go here
-
+#include "vec.h"
 
 //=================================================================================================
 // DIMACS Parser from MiniSat-C v1.14.1:
@@ -89,7 +90,7 @@ static lbool parse_DIMACS_main(char* in, solver* s) {
             lit* begin;
             readClause(&in, s, &lits);
             begin = veci_begin(&lits);
-            if (!solver_addclause(s, begin, begin+veci_size(&lits))){
+            if (!solver_addclause(s, begin, begin+veci_size(&lits))){ //This won't work
                 veci_delete(&lits);
                 return l_False;
             }
