@@ -21,6 +21,10 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #include "vec.h"
 
+
+#include <stdio.h>
+#include <stdlib.h>
+
 //=================================================================================================
 // DIMACS Parser from MiniSat-C v1.14.1:
 
@@ -65,18 +69,18 @@ static inline int parseInt(char** in) {
         (*in)++;
     return _neg ? -val : val; }
 
-static void readClause(char** in, solver* s, veci* lits) {
+static void readClause(char** in, solver* s, veci* lits) {  //Takes in a 'solver', won't compile yet
     int parsed_lit, var;
     veci_resize(lits,0);
     for (;;){
         parsed_lit = parseInt(in);
         if (parsed_lit == 0) break;
         var = abs(parsed_lit)-1;
-        veci_push(lits, (parsed_lit > 0 ? toLit(var) : lit_neg(toLit(var))));
+        veci_push(lits, (parsed_lit > 0 ? toLit(var) : lit_neg(toLit(var)))); // toLit and lit_neg not defined yet
     }
 }
 
-static lbool parse_DIMACS_main(char* in, solver* s) {
+static lbool parse_DIMACS_main(char* in, solver* s) { // lbool not defined yet
     veci lits;
     veci_new(&lits);
 
@@ -103,7 +107,7 @@ static lbool parse_DIMACS_main(char* in, solver* s) {
 
 // Inserts problem into solver. Returns FALSE upon immediate conflict.
 //
-static lbool parse_DIMACS(FILE * in, solver* s) {
+static lbool parse_DIMACS(FILE * in, solver* s) { // lbool isn't defined yet
     char* text = readFile(in);
     lbool ret  = parse_DIMACS_main(text, s);
     free(text);
@@ -115,6 +119,9 @@ static lbool parse_DIMACS(FILE * in, solver* s) {
 
 int main(int argc, char** argv)
 {
+
+   FILE* in;
+
     if (argc != 2)
         fprintf(stderr, "ERROR! Not enough command line arguments.\n"),
         exit(1);
