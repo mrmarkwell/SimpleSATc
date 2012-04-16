@@ -23,6 +23,24 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 //=================================================================================================
 // DIMACS Parser from MiniSat-C v1.14.1:
 
+char* readFile(FILE *  in)
+{
+    char*   data = malloc(65536);
+    int     cap  = 65536;
+    int     size = 0;
+
+    while (!feof(in)){
+        if (size == cap){
+            cap *= 2;
+            data = realloc(data, cap); }
+        size += fread(&data[size], 1, 65536, in);
+    }
+    data = realloc(data, size+1);
+    data[size] = '\0';
+
+    return data;
+}
+
 
 static inline void skipWhitespace(char** in) {
     while ((**in >= 9 && **in <= 13) || **in == 32)
@@ -94,6 +112,24 @@ static lbool parse_DIMACS(FILE * in, solver* s) {
 //=================================================================================================
 
 
+int main(int argc, char** argv)
+{
+    if (argc != 2)
+        fprintf(stderr, "ERROR! Not enough command line arguments.\n"),
+        exit(1);
+
+    in = fopen(argv[1], "rb");
+    if (in == NULL)
+        fprintf(stderr, "ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]),
+        exit(1);
+    st = parse_DIMACS(in, s);
+    fclose(in);
+
+    if (st == l_False){
+        solver_delete(s);
+        printf("Trivial problem\nUNSATISFIABLE\n");
+        exit(20);
+    }
 
 
-
+}
