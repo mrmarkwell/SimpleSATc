@@ -21,6 +21,18 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 **************************************************************************************************/
 
 #include <stdio.h>
+#include "solver.h"
+
+
+//=================================================================================================
+// Useful for Debug:
+
+static void printlits(lit* begin, lit* end)
+{
+    int i;
+    for (i = 0; i < end - begin; i++)
+        printf(L_LIT" ",L_lit(begin[i]));
+}
 
 
 //=================================================================================================
@@ -29,9 +41,42 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 struct clause_t
 {
    int size;
+   lit lits[0];
+   int level_sat;
 }
 
+static inline int   clause_size       (clause* c)          { return c->size; }
+static inline lit*  clause_begin      (clause* c)          { return c->lits; }
+static inline int   clause_level      (clause* c)          { return c->level_sat; }
 
+//=================================================================================================
+// Minor (solver) functions:
+
+void solver_setnvars(solver* s,int n)
+{
+    int var;
+
+    if (s->cap < n){
+
+        while (s->cap < n) s->cap = s->cap*2+1;
+
+        s->decisions = (lbool*)  realloc(s->decisions,sizeof(lbool)*s->cap);
+        s->assigns   = (lbool*)  realloc(s->assigns,  sizeof(lbool)*s->cap);
+        s->levels    = (int*)    realloc(s->levels,   sizeof(int)*s->cap);
+        s->counts    = (int*)    realloc(s->counts,   sizeof(int)*s->cap);
+        s->level_choice = (bool*) realloc(s->level_choice, sizeof(bool)*s->cap);
+    }
+
+    for (var = s->size; var < n; var++){
+        s->decisions    [var] = l_Undef;
+        s->assigns      [var] = l_Undef;
+        s->levels       [var] = -1;
+        s->counts       [var] = 0;
+        s->level_choice [var] = false;
+    }
+
+    s->size = n > s->size ? n : s->size;
+}
 
 
 

@@ -59,10 +59,28 @@ static inline int  lit_sign(lit l) { return (l & 1); }
 struct clause_t;
 typedef struct clause_t clause;
 
+struct solver_t
+{
+   int size;            // number of variables
+   int cap;             // size of varmaps
+   int tail;            // tail of clause vecp
 
+   vecp  clauses;       // vector of pointers to all clauses
+   lbool*  decisions;   // array of decisions to variables (use this to determine which directions
+                        // down the tree you've gone.
 
+   bool*   level_choice // only one variable assignment is selected per level.
+                        // The other level decisions are required by the unit clause rule.
+                        // This array keeps track of which choice was made at each level
 
-//Put the solver struct here
+   lbool*  assigns;     // this is the current list of assignments (if a solution is found, this
+                        //array has the solution in it)
+
+   int*  levels;        // level that each lit was assigned
+   int*  counts;        // number of occurrences of each literal
+
+};
+
 
 
 

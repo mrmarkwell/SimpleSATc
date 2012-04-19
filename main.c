@@ -80,7 +80,7 @@ static void readClause(char** in, veci* lits) {
     }
 }
 
-static lbool parse_DIMACS_main(char* in, solver* s) {
+static lbool parse_DIMACS_main(char* in, solver* s) {  // Define a solver!
     veci lits;
     veci_new(&lits);
 
