@@ -48,9 +48,14 @@ static inline int  lit_sign(lit l) { return (l & 1); }
 
 //================================================================================================
 // Public interface:
-//
+
+struct solver_t;
+typedef struct solver_t solver;
+
 // put the public stuff from solver.c in here.
 //
+
+extern void    solver_setnvars(solver* s,int n);
 
 //================================================================================================
 // Solver Representation:
@@ -69,7 +74,7 @@ struct solver_t
    lbool*  decisions;   // array of decisions to variables (use this to determine which directions
                         // down the tree you've gone.
 
-   bool*   level_choice // only one variable assignment is selected per level.
+   bool*   level_choice; // only one variable assignment is selected per level.
                         // The other level decisions are required by the unit clause rule.
                         // This array keeps track of which choice was made at each level
 
