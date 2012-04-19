@@ -69,18 +69,18 @@ static inline int parseInt(char** in) {
         (*in)++;
     return _neg ? -val : val; }
 
-static void readClause(char** in, solver* s, veci* lits) {  //Takes in a 'solver', won't compile yet
+static void readClause(char** in, veci* lits) {
     int parsed_lit, var;
     veci_resize(lits,0);
     for (;;){
         parsed_lit = parseInt(in);
         if (parsed_lit == 0) break;
         var = abs(parsed_lit)-1;
-        veci_push(lits, (parsed_lit > 0 ? toLit(var) : lit_neg(toLit(var)))); // toLit and lit_neg not defined yet
+        veci_push(lits, (parsed_lit > 0 ? toLit(var) : lit_neg(toLit(var))));
     }
 }
 
-static lbool parse_DIMACS_main(char* in, solver* s) { // lbool not defined yet
+static lbool parse_DIMACS_main(char* in, solver* s) {
     veci lits;
     veci_new(&lits);
 
@@ -92,7 +92,7 @@ static lbool parse_DIMACS_main(char* in, solver* s) { // lbool not defined yet
             skipLine(&in);
         else{
             lit* begin;
-            readClause(&in, s, &lits);
+            readClause(&in, &lits);
             begin = veci_begin(&lits);
             if (!solver_addclause(s, begin, begin+veci_size(&lits))){ //This won't work
                 veci_delete(&lits);
@@ -119,7 +119,8 @@ static lbool parse_DIMACS(FILE * in, solver* s) { // lbool isn't defined yet
 
 int main(int argc, char** argv)
 {
-
+   solver* s = solver_new(); // define this!
+   lbool st;
    FILE* in;
 
     if (argc != 2)

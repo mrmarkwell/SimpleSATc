@@ -32,8 +32,13 @@ static const bool true     = 1;
 static const bool false    = 0;
 
 typedef int lit;
-
+typedef char  lbool;
 // might add some specific consts for ints or lits here to help with// the arrays in the solver (decision, levels, counts)
+
+static const lbool l_Undef   =  0;
+static const lbool l_True    =  1;
+static const lbool l_False   = -1;
+
 
 static inline lit  toLit   (int v) { return v + v; }
 static inline lit  lit_neg (lit l) { return l ^ 1; }
