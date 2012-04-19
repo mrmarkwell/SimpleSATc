@@ -69,7 +69,7 @@ struct solver_t
    int size;            // number of variables
    int cap;             // size of varmaps
    int tail;            // tail of clause vecp
-
+   int cur_level;       // current level in decision tree
    vecp  clauses;       // vector of pointers to all clauses
    lbool*  decisions;   // array of decisions to variables (use this to determine which directions
                         // down the tree you've gone.
@@ -85,8 +85,6 @@ struct solver_t
    int*  counts;        // number of occurrences of each literal
 
 };
-
-
 
 
 

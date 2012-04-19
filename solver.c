@@ -80,4 +80,108 @@ void solver_setnvars(solver* s,int n)
 
 
 
+//=================================================================================================
+// Solver functions
+
+solver* solver_new(void)
+{
+   solver* s = (solver*)malloc(sizeof(solver));
+
+   vecp_new(&s->clauses);
+
+   // initialize arrays
+   s->decisions      = 0;  // just setting all the pointers to NULL initially
+   s->level_choice   = 0;
+   s->assigns        = 0;
+   s->levels         = 0;
+   s->counts         = 0;
+
+   // initialize other variables
+   s->size           = 0;
+   s->cap            = 0;
+   s->tail           = 0;
+   s->cur_level      = 0;
+
+   return s;
+
+}
+
+void solver_delete(solver* s)
+{
+    int i;
+    for (i = 0; i < vecp_size(&s->clauses); i++)  // free all clauses
+        free(vecp_begin(&s->clauses)[i]);
+
+
+    // delete vectors
+    vecp_delete(&s->clauses);
+
+    // delete arrays
+    if (s->decisions != 0){
+
+        // if one is different from null, all are
+        free(s->decisions);
+        free(s->level_choice);
+        free(s->assigns  );
+        free(s->levels   );
+        free(s->counts   );
+    }
+
+    free(s);
+}
+
+
+bool solver_addclause(solver* s, lit* begin, lit* end)
+{
+    lit *i,*j;
+    int maxvar;
+    lbool* values;
+    lit last;
+
+    if (begin == end) return false;
+
+    //printlits(begin,end); printf("\n");
+    // insertion sort
+    maxvar = lit_var(*begin);
+    for (i = begin + 1; i < end; i++){
+        lit l = *i;
+        maxvar = lit_var(l) > maxvar ? lit_var(l) : maxvar;
+        for (j = i; j > begin && *(j-1) > l; j--)
+            *j = *(j-1);
+        *j = l;
+    }
+    solver_setnvars(s,maxvar+1);
+
+    //printlits(begin,end); printf("\n");
+    values = s->assigns;
+
+    // delete duplicates
+    last = lit_Undef;
+    for (i = j = begin; i < end; i++){
+        //printf("lit: "L_LIT", value = %d\n", L_lit(*i), (lit_sign(*i) ? -values[lit_var(*i)] : values[lit_var(*i)]));
+        lbool sig = !lit_sign(*i); sig += sig - 1;
+        if (*i == lit_neg(last) || sig == values[lit_var(*i)])
+            return true;   // tautology
+        else if (*i != last && values[lit_var(*i)] == l_Undef)
+            last = *j++ = *i;
+    }
+
+    //printf("final: "); printlits(begin,j); printf("\n");
+
+    if (j == begin)          // empty clause
+        return false;
+    else if (j - begin == 1) // unit clause
+        return enqueue(s,*begin,(clause*)0);
+
+    // create new clause
+    vecp_push(&s->clauses,clause_new(s,begin,j,0));
+
+
+    s->stats.clauses++;
+    s->stats.clauses_literals += j - begin;
+
+    return true;
+}
+
+
 

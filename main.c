@@ -80,7 +80,7 @@ static void readClause(char** in, veci* lits) {
     }
 }
 
-static lbool parse_DIMACS_main(char* in, solver* s) {  // Define a solver!
+static lbool parse_DIMACS_main(char* in, solver* s) {
     veci lits;
     veci_new(&lits);
 
@@ -94,20 +94,20 @@ static lbool parse_DIMACS_main(char* in, solver* s) {  // Define a solver!
             lit* begin;
             readClause(&in, &lits);
             begin = veci_begin(&lits);
-            if (!solver_addclause(s, begin, begin+veci_size(&lits))){ //This won't work
+            if (!solver_addclause(s, begin, begin+veci_size(&lits))){
                 veci_delete(&lits);
                 return l_False;
             }
         }
     }
     veci_delete(&lits);
-    return solver_simplify(s);
+    return l_True;
 }
 
 
 // Inserts problem into solver. Returns FALSE upon immediate conflict.
 //
-static lbool parse_DIMACS(FILE * in, solver* s) { // lbool isn't defined yet
+static lbool parse_DIMACS(FILE * in, solver* s) {
     char* text = readFile(in);
     lbool ret  = parse_DIMACS_main(text, s);
     free(text);
@@ -119,7 +119,7 @@ static lbool parse_DIMACS(FILE * in, solver* s) { // lbool isn't defined yet
 
 int main(int argc, char** argv)
 {
-   solver* s = solver_new(); // define this!
+   solver* s = solver_new();
    lbool st;
    FILE* in;
 
