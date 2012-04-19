@@ -6,7 +6,7 @@ EXEC  = SimpleSATc
 
 CC    = gcc
 
-$(EXEC): main.o
+$(EXEC): main.o solver.h
 	 @echo Linking $(EXEC)
 	 @$(CC) main.o -lz -lm -ggdb -Wall -o $@
 

@@ -81,4 +81,4 @@ static inline void   vecp_push   (vecp* v, void* e)
 }
 
 
-#endif
+#endif /* vec.h */
