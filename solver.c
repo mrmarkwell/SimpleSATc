@@ -21,6 +21,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 **************************************************************************************************/
 
 #include <stdio.h>
+#include <assert.h>
 #include "solver.h"
 
 
@@ -53,6 +54,35 @@ struct clause_t
 static inline int   clause_size       (clause* c)          { return c->size; }
 static inline lit*  clause_begin      (clause* c)          { return c->lits; }
 static inline int   clause_level      (clause* c)          { return c->level_sat; }
+
+//=================================================================================================
+// Clause functions:
+
+static clause* clause_new(solver* s, lit* begin, lit* end, int learnt)
+{
+    int size;
+    clause* c;
+    int i;
+
+    assert(end - begin > 1);
+    size           = end - begin;
+    c              = (clause*)malloc(sizeof(clause) + sizeof(lit) * size);
+
+    for (i = 0; i < size; i++)
+        c->lits[i] = begin[i];
+
+    assert(begin[0] >= 0);
+    assert(begin[0] < s->size*2);
+    assert(begin[1] >= 0);
+    assert(begin[1] < s->size*2);
+
+    assert(lit_neg(begin[0]) < s->size*2);
+    assert(lit_neg(begin[1]) < s->size*2);
+
+    c->size = size;
+    c->level_sat = -1;  // -1 means 'clause not yet satisfied'
+    return c;
+}
 
 //=================================================================================================
 // Minor (solver) functions:
