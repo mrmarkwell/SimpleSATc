@@ -40,10 +40,10 @@ static const lbool l_True    =  1;
 static const lbool l_False   = -1;
 
 
-static inline lit  toLit   (int v) { return v + v; }
-static inline lit  lit_neg (lit l) { return l ^ 1; }
-static inline int  lit_var (lit l) { return l >> 1; }
-static inline int  lit_sign(lit l) { return (l & 1); }
+static inline lit  toLit   (int v) { return v + v; } // changes value to literal int (other than sign bit)
+static inline lit  lit_neg (lit l) { return l ^ 1; } // Changes the sign of the lit
+static inline int  lit_var (lit l) { return l >> 1; } // Returns the value of the lit (ignoring sign)
+static inline int  lit_sign(lit l) { return (l & 1); } // Returns 1 if sign is neg and 0 if it is pos.
 
 
 //================================================================================================
@@ -54,6 +54,11 @@ typedef struct solver_t solver;
 
 // put the public stuff from solver.c in here.
 //
+
+extern solver* solver_new(void);
+extern void    solver_delete(solver* s);
+
+extern bool    solver_addclause(solver* s, lit* begin, lit* end);
 
 extern void    solver_setnvars(solver* s,int n);
 

@@ -27,6 +27,11 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 //=================================================================================================
 // Useful for Debug:
 
+#define L_IND    "%-*d"
+#define L_ind    solver_dlevel(s)*3+3,solver_dlevel(s)
+#define L_LIT    "%sx%d"
+#define L_lit(p) lit_sign(p)?"~":"", (lit_var(p))
+
 static void printlits(lit* begin, lit* end)
 {
     int i;
@@ -41,9 +46,9 @@ static void printlits(lit* begin, lit* end)
 struct clause_t
 {
    int size;
-   lit lits[0];
    int level_sat;
-}
+   lit lits[0];
+};
 
 static inline int   clause_size       (clause* c)          { return c->size; }
 static inline lit*  clause_begin      (clause* c)          { return c->lits; }
@@ -135,10 +140,8 @@ bool solver_addclause(solver* s, lit* begin, lit* end)
 {
     lit *i,*j;
     int maxvar;
-    lbool* values;
-    lit last;
 
-    if (begin == end) return false;
+    if (begin == end) return false; // Empty clause
 
     //printlits(begin,end); printf("\n");
     // insertion sort
@@ -153,32 +156,10 @@ bool solver_addclause(solver* s, lit* begin, lit* end)
     solver_setnvars(s,maxvar+1);
 
     //printlits(begin,end); printf("\n");
-    values = s->assigns;
-
-    // delete duplicates
-    last = lit_Undef;
-    for (i = j = begin; i < end; i++){
-        //printf("lit: "L_LIT", value = %d\n", L_lit(*i), (lit_sign(*i) ? -values[lit_var(*i)] : values[lit_var(*i)]));
-        lbool sig = !lit_sign(*i); sig += sig - 1;
-        if (*i == lit_neg(last) || sig == values[lit_var(*i)])
-            return true;   // tautology
-        else if (*i != last && values[lit_var(*i)] == l_Undef)
-            last = *j++ = *i;
-    }
-
-    //printf("final: "); printlits(begin,j); printf("\n");
-
-    if (j == begin)          // empty clause
-        return false;
-    else if (j - begin == 1) // unit clause
-        return enqueue(s,*begin,(clause*)0);
 
     // create new clause
-    vecp_push(&s->clauses,clause_new(s,begin,j,0));
-
-
-    s->stats.clauses++;
-    s->stats.clauses_literals += j - begin;
+    vecp_push(&s->clauses,clause_new(s,begin,end,0));
+    s->tail++;  // tail == # of clauses at first.
 
     return true;
 }

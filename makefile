@@ -2,11 +2,15 @@
 ## Makefile for SimpleSATc
 ##
 
-EXEC  = SimpleSATc
+CSRCS = $(wildcard *.c)
+COBJS = $(addsuffix .o, $(basename $(CSRCS)))
 
+EXEC  = SimpleSATc
 CC    = gcc
 
-$(EXEC): main.o solver.h
+$(EXEC): $(COBJS)
 	 @echo Linking $(EXEC)
-	 @$(CC) main.o -lz -lm -ggdb -Wall -o $@
+	 @$(CC) $(COBJS) -lz -lm -ggdb -Wall -o $@
 
+clean:
+	 @rm -f $(EXEC) $(COBJS)
