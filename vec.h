@@ -24,6 +24,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #include <stdlib.h>
 
+#define DEBUG 1
 
 // vector of 32-bit intergers (added for 64-bit portability)
 struct veci_t {

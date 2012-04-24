@@ -173,7 +173,7 @@ bool solver_addclause(solver* s, lit* begin, lit* end)
 
     if (begin == end) return false; // Empty clause
 
-    //printlits(begin,end); printf("\n");
+    //if(DEBUG){printlits(begin,end); printf("\n");}
     // insertion sort
     maxvar = lit_var(*begin);
     for (i = begin + 1; i < end; i++){
@@ -185,7 +185,7 @@ bool solver_addclause(solver* s, lit* begin, lit* end)
     }
     solver_setnvars(s,maxvar+1);
 
-    //printlits(begin,end); printf("\n");
+    if(DEBUG){printf("Adding clause\n");printlits(begin,end); printf("\n");}
 
     // create new clause
     vecp_push(&s->clauses,clause_new(s,begin,end,0));

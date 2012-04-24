@@ -131,6 +131,7 @@ int main(int argc, char** argv)
     if (in == NULL)
         fprintf(stderr, "ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]),
         exit(1);
+    if(DEBUG) printf("\n\nFile read.  Beginning parse_DIMACS\n");
     st = parse_DIMACS(in, s);
     fclose(in);
 
@@ -140,5 +141,5 @@ int main(int argc, char** argv)
         exit(20);
     }
 
-
+   if(DEBUG) {printf("Solver size: %d Tail: %d\n",s->size,s->tail);}
 }
