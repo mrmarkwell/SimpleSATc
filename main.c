@@ -164,6 +164,10 @@ int main(int argc, char** argv)
          printf("counts[%d] = %d\n", i, s->counts[i]);
       }
    }
+   if(DEBUG) {printf("decision made is %d\n", decision);}
 
    if(DEBUG) {printf("Solver size: %d Tail: %d\n",s->size,s->tail);}
+
+   solver_delete(s);
+   return 0;
 }

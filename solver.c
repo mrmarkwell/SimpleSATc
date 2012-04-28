@@ -102,7 +102,7 @@ void solver_setnvars(solver* s,int n)
         s->level_choice = (bool*) realloc(s->level_choice, sizeof(bool)*s->cap);
     }
 
-    for (var = s->size; var < n; var++){
+    for (var = s->size*2; var < s->cap; var++){
         s->decisions    [var] = l_Undef;
         s->assigns      [var] = l_Undef;
         s->levels       [var] = -1;
@@ -207,7 +207,10 @@ bool update_counts(solver* s)
    for(i = 0; i < s->tail;i++) {
       c = vecp_begin(&s->clauses)[i];
       for(j = 0; j < c->size; j++) {
-         if(s->decisions[c->lits[j]] == l_Undef)
+         // A true literal should not be in the working set of clauses!
+         if(s->decisions[c->lits[j]] == l_True) return false;
+         else
+            if(s->decisions[c->lits[j]] == l_Undef) // Only count if not False
             s->counts[c->lits[j]]++;
       }
    }
@@ -216,13 +219,24 @@ bool update_counts(solver* s)
 
 lit make_decision(solver* s)
 {
+   int i, maxval;
+   lit maxlit;
    if(!update_counts(s))
       fprintf(stderr, "ERROR! Failed to update literal counts at level %d\n", s->cur_level),
       exit(1);
+   maxval = -1;
+   maxlit = -1;
+   for(i = 0; i < s->size*2; i++){
+      if (s->counts[i] > maxval){
+         maxval = s->counts[i];
+         maxlit = i;
+      }
+   }
+   if (maxval == 0 || s->decisions[maxlit] == l_False)
+      fprintf(stderr, "ERROR! make_decision failed to find a lit that exists and isn't false!\n"),
+      exit(1);
 
-   // finish this
-
-   return 1;
+   return maxlit;
 
 }
 
