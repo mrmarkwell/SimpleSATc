@@ -57,6 +57,8 @@ typedef struct solver_t solver;
 
 extern solver* solver_new(void);
 extern void    solver_delete(solver* s);
+extern bool    update_counts(solver* s);
+extern lit     make_decision(solver* s);
 
 extern bool    solver_addclause(solver* s, lit* begin, lit* end);
 

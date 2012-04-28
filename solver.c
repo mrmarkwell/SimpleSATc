@@ -195,4 +195,34 @@ bool solver_addclause(solver* s, lit* begin, lit* end)
 }
 
 
+bool update_counts(solver* s)
+{
+   int i,j;
+   clause* c;
+   // reset all counts to 0 initially
+   for(i = 0; i < (s->size)*2; i++) {
+      s->counts[i] = 0;
+   }
+   // now recount
+   for(i = 0; i < s->tail;i++) {
+      c = vecp_begin(&s->clauses)[i];
+      for(j = 0; j < c->size; j++) {
+         if(s->decisions[c->lits[j]] == l_Undef)
+            s->counts[c->lits[j]]++;
+      }
+   }
+   return true;
+}
+
+lit make_decision(solver* s)
+{
+   if(!update_counts(s))
+      fprintf(stderr, "ERROR! Failed to update literal counts at level %d\n", s->cur_level),
+      exit(1);
+
+   // finish this
+
+   return 1;
+
+}
 
