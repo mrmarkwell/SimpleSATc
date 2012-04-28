@@ -146,27 +146,30 @@ int main(int argc, char** argv)
 
       // pick a variable to decide on (based on counts)
 
+   if(DEBUG) {printf("Solver size: %d Tail: %d\n",s->size,s->tail);}
       decision = make_decision(s);
-//    propogate_decision(decision);
+      if(DEBUG) {printf("decision made is %d\n", decision);}
+      if(!propogate_decision(s, decision, true)){
+            printf("Hooray!  I found a conflict due to literal %d!!\n\n", decision);}
 
-//     remove_units();
+//    find_units();
       // make manipulate solver due to decision
       // find necessary decisions due to this decision (unit clauses)
       //    Do this again and again until there are no more unit clauses
       // If tail ever reaches 0, solved. if a clause is ever entirely false, backtrack.
       // If you backtrack, you choose the opposite value of the one you backtracked to.
       // once all unit clauses are satisfied, return to top of loop to pick next value.
-//   } (end of while)
-   if(DEBUG) {
-      int i;
-      printf("Values in 'counts':\n");
-      for (i = 0; i < (s->size)*2; i++) {
-         printf("counts[%d] = %d\n", i, s->counts[i]);
-      }
-   }
-   if(DEBUG) {printf("decision made is %d\n", decision);}
 
-   if(DEBUG) {printf("Solver size: %d Tail: %d\n",s->size,s->tail);}
+
+//   } (end of while)
+   //if(DEBUG) {
+   //   int i;
+   //   printf("Values in 'counts':\n");
+   //   for (i = 0; i < (s->size)*2; i++) {
+   //     printf("counts[%d] = %d\n", i, s->counts[i]);
+   //   }
+   //}
+   if(DEBUG) {printf("final tail position is: %d\n",s->tail);}
 
    solver_delete(s);
    return 0;

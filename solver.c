@@ -32,13 +32,20 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #define L_ind    solver_dlevel(s)*3+3,solver_dlevel(s)
 #define L_LIT    "%sx%d"
 #define L_lit(p) lit_sign(p)?"~":"", (lit_var(p))
-
 static void printlits(lit* begin, lit* end)
 {
     int i;
     for (i = 0; i < end - begin; i++)
         printf(L_LIT" ",L_lit(begin[i]));
 }
+
+static void printvalues(lit* begin, lit* end)
+{
+    int i;
+    for (i = 0; i < end - begin; i++)
+        printf("%d ",begin[i]);
+}
+
 
 
 //=================================================================================================
@@ -95,19 +102,19 @@ void solver_setnvars(solver* s,int n)
 
         while (s->cap < n) s->cap = s->cap*2+1;
 
-        s->decisions = (lbool*)  realloc(s->decisions,sizeof(lbool)*s->cap);
+        s->decisions = (bool*)  realloc(s->decisions,sizeof(bool)*s->cap);
         s->assigns   = (lbool*)  realloc(s->assigns,  sizeof(lbool)*s->cap);
         s->levels    = (int*)    realloc(s->levels,   sizeof(int)*s->cap);
         s->counts    = (int*)    realloc(s->counts,   sizeof(int)*s->cap);
-        s->level_choice = (bool*) realloc(s->level_choice, sizeof(bool)*s->cap);
+        s->level_choice = (lit*) realloc(s->level_choice, sizeof(lit)*s->cap);
     }
 
     for (var = s->size*2; var < s->cap; var++){
-        s->decisions    [var] = l_Undef;
+        s->decisions    [var] = false;
         s->assigns      [var] = l_Undef;
         s->levels       [var] = -1;
         s->counts       [var] = 0;
-        s->level_choice [var] = false;
+        s->level_choice [var] = -1;
     }
 
     s->size = n > s->size ? n : s->size;
@@ -135,7 +142,7 @@ solver* solver_new(void)
    s->size           = 0;
    s->cap            = 0;
    s->tail           = 0;
-   s->cur_level      = 0;
+   s->cur_level      = -1;
 
    return s;
 
@@ -185,7 +192,7 @@ bool solver_addclause(solver* s, lit* begin, lit* end)
     }
     solver_setnvars(s,maxvar+1);
 
-    if(DEBUG){printf("Adding clause\n");printlits(begin,end); printf("\n");}
+    if(DEBUG){printf("Adding clause\n");printvalues(begin,end); printf("\n");}
 
     // create new clause
     vecp_push(&s->clauses,clause_new(s,begin,end,0));
@@ -206,11 +213,11 @@ bool update_counts(solver* s)
    // now recount
    for(i = 0; i < s->tail;i++) {
       c = vecp_begin(&s->clauses)[i];
-      for(j = 0; j < c->size; j++) {
+      for(j = 0; j < clause_size(c); j++) {
          // A true literal should not be in the working set of clauses!
-         if(s->decisions[c->lits[j]] == l_True) return false;
+         if(s->assigns[c->lits[j]] == l_True) return false;
          else
-            if(s->decisions[c->lits[j]] == l_Undef) // Only count if not False
+            if(s->assigns[c->lits[j]] == l_Undef) // Only count if not False
             s->counts[c->lits[j]]++;
       }
    }
@@ -232,11 +239,55 @@ lit make_decision(solver* s)
          maxlit = i;
       }
    }
-   if (maxval == 0 || s->decisions[maxlit] == l_False)
+   if (maxval == 0 || s->assigns[maxlit] == l_False)
       fprintf(stderr, "ERROR! make_decision failed to find a lit that exists and isn't false!\n"),
       exit(1);
 
    return maxlit;
 
+}
+
+// returns false if there is a conflict due to this decision
+bool propogate_decision(solver* s, lit decision, bool new_level){
+   bool no_conflict = true;
+   int i,j,false_count;
+   clause* c;
+
+
+   if(new_level){
+      s->cur_level++;
+      s->level_choice[s->cur_level] = decision;
+   }
+   s->levels[decision] = s->cur_level;
+   s->decisions[decision] = true;
+   s->assigns[decision] = l_True;
+   s->assigns[lit_neg(decision)] = l_False;
+
+   for(i = 0; i < s->tail; i++){
+      c = vecp_begin(&s->clauses)[i];
+      for(j = 0; j < clause_size(c); j++){
+         if(j == 0) false_count = 0;
+         if(s->assigns[c->lits[j]] == l_False) {
+            printf("Found a false assignment, %d, now incrementing false_count from %d\n",c->lits[j],false_count);
+            false_count++;
+         }
+         else if(s->assigns[c->lits[j]] == l_True) {
+            if(DEBUG) {
+               printf("Clause satisfied! clause is:\n");
+               printvalues(c->lits, c->lits + c->size);
+               printf("\n");
+            }
+            vecp_begin(&s->clauses)[i] = vecp_begin(&s->clauses)[--s->tail];
+            vecp_begin(&s->clauses)[s->tail] = c;
+            c->level_sat = s->cur_level;
+         }
+         if(false_count == clause_size(c)) {
+            no_conflict = false; //Conflict found!
+            if(DEBUG) printf("Found a conflict, false_count = %d\n",false_count);
+         }
+      }
+   }
+
+   return no_conflict;
 }
 

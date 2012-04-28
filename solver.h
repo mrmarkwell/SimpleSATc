@@ -59,6 +59,7 @@ extern solver* solver_new(void);
 extern void    solver_delete(solver* s);
 extern bool    update_counts(solver* s);
 extern lit     make_decision(solver* s);
+extern bool    propogate_decision(solver* s, lit decision, bool new_level);
 
 extern bool    solver_addclause(solver* s, lit* begin, lit* end);
 
@@ -78,10 +79,11 @@ struct solver_t
    int tail;            // tail of clause vecp
    int cur_level;       // current level in decision tree
    vecp  clauses;       // vector of pointers to all clauses
-   lbool*  decisions;   // array of decisions to variables (use this to determine which directions
-                        // down the tree you've gone.
+   bool*  decisions;    // array of decisions to variables (use this to determine which directions
+                        // down the tree you've gone. !!only make l_True!! l_Undef indicates this
+                        // decision has not yet been made
 
-   bool*   level_choice; // only one variable assignment is selected per level.
+   lit*   level_choice; // only one variable assignment is selected per level.
                         // The other level decisions are required by the unit clause rule.
                         // This array keeps track of which choice was made at each level
 
