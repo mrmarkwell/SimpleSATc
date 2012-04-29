@@ -52,8 +52,8 @@ static inline int  lit_sign(lit l) { return (l & 1); } // Returns 1 if sign is n
 struct solver_t;
 typedef struct solver_t solver;
 
-extern bool solver_solve(solver* s);
-extern void printsolution(solver* s, FILE* out);
+extern bool    solver_solve(solver* s);
+extern void    printsolution(solver* s, FILE* out);
 extern solver* solver_new(void);
 extern void    solver_delete(solver* s);
 

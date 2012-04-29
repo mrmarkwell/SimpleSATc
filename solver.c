@@ -256,7 +256,7 @@ lit make_decision(solver* s)
 }
 
 // returns false if there is a conflict due to this decision
-bool propogate_decision(solver* s, lit decision, bool new_level){
+bool propagate_decision(solver* s, lit decision, bool new_level){
    bool no_conflict = true;
    int i,j,false_count;
    clause* c;
@@ -306,7 +306,7 @@ bool propogate_decision(solver* s, lit decision, bool new_level){
 }
 
 // returns the level_choice of the level backtracked to
-lit backtrack(solver* s){
+lit backtrack_once(solver* s){
    int i;
    lit lev_choice;
    clause* c;
@@ -330,44 +330,57 @@ lit backtrack(solver* s){
 
 }
 
-bool solver_solve(solver* s){
-   lit decision;
-   bool forced = false;
-
-//   while(true) {
-
-      // pick a variable to decide on (based on counts)
-      if(!forced) {decision = make_decision(s);}
-      if(DEBUG) {printf("decision made is %d. It %s a forced decision\n", decision, forced?"IS":"IS NOT");}
-      else forced = false;
-      if(!propogate_decision(s, decision, true)){
-         // CONFLICT FOUND
-         if(DEBUG)printf("Hooray!  I found a conflict due to literal %d!!\n\n", decision);
-         lit lev_choice = backtrack(s);
+bool backtrack(solver* s, lit* decision) {
+// CONFLICT FOUND
+         lit lev_choice = backtrack_once(s);
             while(s->decisions[lit_neg(lev_choice)] == l_True && s->decisions[lev_choice] == l_True) {
                if(s->cur_level == 0) { return false;} //UNSATISFIABLE
                s->decisions[lit_neg(lev_choice)] = l_Undef;
                s->decisions[lev_choice] = l_Undef;
-               lev_choice = backtrack(s);
+               lev_choice = backtrack_once(s);
             }
          decision = lit_neg(lev_choice);
          forced = true;
 //         continue;
+
+
+
+}
+
+bool solver_solve(solver* s){
+   lit decision;
+   bool forced = false;
+
+   while(true) {
+
+      // pick a variable to decide on (based on counts)
+      if(!forced) {decision = make_decision(s);}
+      else forced = false;
+      if(!propagate_decision(s, decision, true)){
+         // CONFLICT
+         if(!backtrack(s,&decision)) return false;//UNSATISFIABLE
+         else{ //Backtrack worked, decision must be forced
+            forced = true;
+            continue;
+         }
       }
       else {
-         // NO CONFLICT, FIND UNIT CLAUSES... might wanna refactor this whole junk. Maybe just refactor backtracking.
+         // NO CONFLICT
+         if(s->satisfied) return true;
+         if(!propagate_units(s)){
+            // CONFLICT
+            if(!backtrack(s, &decision)) return false; //UNSATISFIABLE
+            else {
+               forced = true;
+               continue;
+            }
+         }
+         else {
+            // NO CONFLICT
+            if(s->satisfied) return true;
+         }
       }
-      if(s->satisfied) return true;
-//    find_units();
-      // make manipulate solver due to decision
-      // find necessary decisions due to this decision (unit clauses)
-      //    Do this again and again until there are no more unit clauses
-      // If tail ever reaches 0, solved. if a clause is ever entirely false, backtrack.
-      // If you backtrack, you choose the opposite value of the one you backtracked to.
-      // once all unit clauses are satisfied, return to top of loop to pick next value.
-
-
-//   }
+   }
 }
 
 
