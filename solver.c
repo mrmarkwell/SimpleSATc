@@ -47,7 +47,6 @@ static void printvalues(lit* begin, lit* end)
 }
 
 
-
 //=================================================================================================
 // Clause struct and associated functions
 
@@ -121,6 +120,14 @@ void solver_setnvars(solver* s,int n)
 }
 
 
+void printsolution(solver* s, FILE* out) {
+   int i,val;
+   for(i = 0; i < s->size*2; i = i+2){
+      val = (s->assigns[i] == l_False)? 0 : 1;
+      fprintf(out,"x%d=%d ",i>>1,val);
+   }
+}
+
 
 //=================================================================================================
 // Solver functions
@@ -143,6 +150,7 @@ solver* solver_new(void)
    s->cap            = 0;
    s->tail           = 0;
    s->cur_level      = -1;
+   s->satisfied      = false;
 
    return s;
 
@@ -276,6 +284,10 @@ bool propogate_decision(solver* s, lit decision, bool new_level){
                printf("Clause satisfied! clause is:\n");
                printvalues(c->lits, c->lits + c->size);
                printf("\n");
+            }
+            if(s->tail == 1) {
+               s->satisfied = true;
+               return true;
             }
             vecp_begin(&s->clauses)[i] = vecp_begin(&s->clauses)[--s->tail];
             vecp_begin(&s->clauses)[s->tail] = c;

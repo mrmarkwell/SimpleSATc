@@ -23,7 +23,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #define solver_h
 
 #include "vec.h"
-
+#include <stdio.h>
 //================================================================================================
 // Simple types:
 
@@ -54,7 +54,7 @@ typedef struct solver_t solver;
 
 // put the public stuff from solver.c in here.
 //
-
+extern void printsolution(solver* s, FILE* out);
 extern solver* solver_new(void);
 extern void    solver_delete(solver* s);
 extern bool    update_counts(solver* s);
@@ -78,6 +78,7 @@ struct solver_t
    int cap;             // size of varmaps
    int tail;            // tail of clause vecp
    int cur_level;       // current level in decision tree
+   bool satisfied;      // false if function is not satisfied
    vecp  clauses;       // vector of pointers to all clauses
    bool*  decisions;    // array of decisions to variables (use this to determine which directions
                         // down the tree you've gone. !!only make l_True!! l_Undef indicates this

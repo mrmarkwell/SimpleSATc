@@ -122,12 +122,13 @@ int main(int argc, char** argv)
    solver* s = solver_new();
    lbool st;
    FILE* in;
+   FILE* out;
    lit decision;
 
     if (argc != 2)
         fprintf(stderr, "ERROR! Not enough command line arguments.\n"),
         exit(1);
-
+    out = fopen("SimpleSATc.out","a");
     in = fopen(argv[1], "rb");
     if (in == NULL)
         fprintf(stderr, "ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]),
@@ -142,16 +143,18 @@ int main(int argc, char** argv)
         exit(20);
     }
 
-//   while(true) {
+   if(DEBUG) {printf("Solver size: %d Tail: %d\n",s->size,s->tail);}
+ //  while(true) {
 
       // pick a variable to decide on (based on counts)
 
-   if(DEBUG) {printf("Solver size: %d Tail: %d\n",s->size,s->tail);}
       decision = make_decision(s);
       if(DEBUG) {printf("decision made is %d\n", decision);}
       if(!propogate_decision(s, decision, true)){
-            printf("Hooray!  I found a conflict due to literal %d!!\n\n", decision);}
+            if(DEBUG)printf("Hooray!  I found a conflict due to literal %d!!\n\n", decision);
 
+      }
+ //     if(s->satisfied) break;
 //    find_units();
       // make manipulate solver due to decision
       // find necessary decisions due to this decision (unit clauses)
@@ -161,7 +164,20 @@ int main(int argc, char** argv)
       // once all unit clauses are satisfied, return to top of loop to pick next value.
 
 
-//   } (end of while)
+ //  }
+
+   fprintf(out,"################################# SimpleSATc #################################\n");
+   fprintf(out,"Input file: %s\n",argv[1]);
+   if(s->satisfied) {
+      fprintf(out,"Result: SATISFIABLE\n");
+      fprintf(out,"Satisfying Solution:\n");
+      printsolution(s,out);
+      fprintf(out, "\n\n\n\n");
+   }
+   else {
+      fprintf(out,"Result: UNSATISFIABLE\n\n\n\n");
+   }
+
    //if(DEBUG) {
    //   int i;
    //   printf("Values in 'counts':\n");
@@ -170,7 +186,7 @@ int main(int argc, char** argv)
    //   }
    //}
    if(DEBUG) {printf("final tail position is: %d\n",s->tail);}
-
+   fclose(out);
    solver_delete(s);
    return 0;
 }
