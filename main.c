@@ -123,57 +123,27 @@ int main(int argc, char** argv)
    lbool st;
    FILE* in;
    FILE* out;
-   lit decision;
-   bool forced = false;
 
-    if (argc != 2)
-        fprintf(stderr, "ERROR! Not enough command line arguments.\n"),
-        exit(1);
-    out = fopen("SimpleSATc.out","a");
-    in = fopen(argv[1], "rb");
-    if (in == NULL)
-        fprintf(stderr, "ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]),
-        exit(1);
-    if(DEBUG) printf("\n\nFile read.  Beginning parse_DIMACS\n");
-    st = parse_DIMACS(in, s);
-    fclose(in);
+   if (argc != 2)
+     fprintf(stderr, "ERROR! Not enough command line arguments.\n"),
+     exit(1);
+   out = fopen("SimpleSATc.out","a");
+   in = fopen(argv[1], "rb");
+   if (in == NULL)
+     fprintf(stderr, "ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]),
+     exit(1);
+   if(DEBUG) printf("\n\nFile read.  Beginning parse_DIMACS\n");
+   st = parse_DIMACS(in, s);
+   fclose(in);
 
-    if (st == l_False){
-        solver_delete(s);
-        printf("Trivial problem\nUNSATISFIABLE\n");
-        exit(20);
-    }
+   if (st == l_False){
+     solver_delete(s);
+     printf("Trivial problem\nUNSATISFIABLE\n");
+     exit(20);
+   }
 
    if(DEBUG) {printf("Solver size: %d Tail: %d\n",s->size,s->tail);}
- //  while(true) {
-
-      // pick a variable to decide on (based on counts)
-      if(!forced) decision = make_decision(s);
-      if(DEBUG) {printf("decision made is %d. It %s a forced decision\n", decision, forced?"IS":"IS NOT");}
-      if(!propogate_decision(s, decision, true)){
-         if(DEBUG)printf("Hooray!  I found a conflict due to literal %d!!\n\n", decision);
-         lit lev_choice = backtrack(s);
-            while(s->decisions[lit_neg(lev_choice)] == l_True && s->decisions[lev_choice] == l_True) {
-               if(s->cur_level == 0) { printf("UNSATISFIABLE");}
-               s->decisions[lit_neg(lev_choice)] = l_Undef;
-               s->decisions[lev_choice] = l_Undef;
-               lev_choice = backtrack(s);
-            }
-            //while both sides have been tried(s->decided = true for both sides);(if at level 0 and both sides have been tried, break, it is unsatisfiable);
-            //backtrack another level
-         //when only one side has been tried, make 'decision' the other side, then set forced = true, and 'continue'
-      }
- //     if(s->satisfied) break;
-//    find_units();
-      // make manipulate solver due to decision
-      // find necessary decisions due to this decision (unit clauses)
-      //    Do this again and again until there are no more unit clauses
-      // If tail ever reaches 0, solved. if a clause is ever entirely false, backtrack.
-      // If you backtrack, you choose the opposite value of the one you backtracked to.
-      // once all unit clauses are satisfied, return to top of loop to pick next value.
-
-
- //  }
+   st = solver_solve(s);
 
    fprintf(out,"################################# SimpleSATc #################################\n");
    fprintf(out,"Input file: %s\n",argv[1]);
