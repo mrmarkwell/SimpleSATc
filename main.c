@@ -124,6 +124,7 @@ int main(int argc, char** argv)
    FILE* in;
    FILE* out;
    lit decision;
+   bool forced = false;
 
     if (argc != 2)
         fprintf(stderr, "ERROR! Not enough command line arguments.\n"),
@@ -147,12 +148,20 @@ int main(int argc, char** argv)
  //  while(true) {
 
       // pick a variable to decide on (based on counts)
-
-      decision = make_decision(s);
-      if(DEBUG) {printf("decision made is %d\n", decision);}
+      if(!forced) decision = make_decision(s);
+      if(DEBUG) {printf("decision made is %d. It %s a forced decision\n", decision, forced?"IS":"IS NOT");}
       if(!propogate_decision(s, decision, true)){
-            if(DEBUG)printf("Hooray!  I found a conflict due to literal %d!!\n\n", decision);
-
+         if(DEBUG)printf("Hooray!  I found a conflict due to literal %d!!\n\n", decision);
+         lit lev_choice = backtrack(s);
+            while(s->decisions[lit_neg(lev_choice)] == l_True && s->decisions[lev_choice] == l_True) {
+               if(s->cur_level == 0) { printf("UNSATISFIABLE");}
+               s->decisions[lit_neg(lev_choice)] = l_Undef;
+               s->decisions[lev_choice] = l_Undef;
+               lev_choice = backtrack(s);
+            }
+            //while both sides have been tried(s->decided = true for both sides);(if at level 0 and both sides have been tried, break, it is unsatisfiable);
+            //backtrack another level
+         //when only one side has been tried, make 'decision' the other side, then set forced = true, and 'continue'
       }
  //     if(s->satisfied) break;
 //    find_units();

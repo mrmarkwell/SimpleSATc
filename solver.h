@@ -52,14 +52,13 @@ static inline int  lit_sign(lit l) { return (l & 1); } // Returns 1 if sign is n
 struct solver_t;
 typedef struct solver_t solver;
 
-// put the public stuff from solver.c in here.
-//
 extern void printsolution(solver* s, FILE* out);
 extern solver* solver_new(void);
 extern void    solver_delete(solver* s);
 extern bool    update_counts(solver* s);
 extern lit     make_decision(solver* s);
 extern bool    propogate_decision(solver* s, lit decision, bool new_level);
+extern lit     backtrack(solver* s);
 
 extern bool    solver_addclause(solver* s, lit* begin, lit* end);
 
@@ -95,17 +94,6 @@ struct solver_t
    int*  counts;        // number of occurrences of each literal
 
 };
-
-
-
-
-
-
-
-
-
-
-
 
 
 #endif /* solver.h */

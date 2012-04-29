@@ -305,3 +305,28 @@ bool propogate_decision(solver* s, lit decision, bool new_level){
    return no_conflict;
 }
 
+// returns the level_choice of the level backtracked to
+lit backtrack(solver* s){
+   int i;
+   lit lev_choice;
+   clause* c;
+
+   for(i = 0; i < s->size*2; i++){
+      if(s->levels[i] == s->cur_level){
+         s->assigns[i] = l_Undef;
+         s->assigns[lit_neg(i)] = l_Undef;
+      }
+   }
+   for(i = s->tail; i < vecp_size(&s->clauses); i++){
+      c = vecp_begin(&s->clauses)[i];
+      if(c->level_sat == s->cur_level){
+         c->level_sat = -1;
+         s->tail++;
+      }
+      else break;
+   }
+
+   return s->level_choice[s->cur_level--];
+
+}
+
