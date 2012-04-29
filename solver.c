@@ -280,6 +280,8 @@ bool propogate_decision(solver* s, lit decision, bool new_level){
             vecp_begin(&s->clauses)[i] = vecp_begin(&s->clauses)[--s->tail];
             vecp_begin(&s->clauses)[s->tail] = c;
             c->level_sat = s->cur_level;
+            i = i--; // be sure to check the current i again - it isn't the same one it was!
+            break;
          }
          if(false_count == clause_size(c)) {
             no_conflict = false; //Conflict found!
