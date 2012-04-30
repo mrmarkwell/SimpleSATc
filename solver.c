@@ -64,7 +64,7 @@ static inline int   clause_level      (clause* c)          { return c->level_sat
 //=================================================================================================
 // Clause functions:
 
-static clause* clause_new(solver* s, lit* begin, lit* end, int learnt)
+static clause* clause_new(solver* s, lit* begin, lit* end)
 {
     int size;
     clause* c;
@@ -97,18 +97,18 @@ void solver_setnvars(solver* s,int n)
 {
     int var;
 
-    if (s->cap < n){
+    if (s->cap < n*2){
 
-        while (s->cap < n) s->cap = s->cap*2+1;
+        while (s->cap < n*2) s->cap = s->cap*2+1;
 
-        s->decisions = (bool*)  realloc(s->decisions,sizeof(bool)*s->cap);
+        s->decisions = (bool*)   realloc(s->decisions,sizeof(bool)*s->cap);
         s->assigns   = (lbool*)  realloc(s->assigns,  sizeof(lbool)*s->cap);
         s->levels    = (int*)    realloc(s->levels,   sizeof(int)*s->cap);
         s->counts    = (int*)    realloc(s->counts,   sizeof(int)*s->cap);
         s->level_choice = (lit*) realloc(s->level_choice, sizeof(lit)*s->cap);
     }
 
-    for (var = s->size*2; var < s->cap; var++){
+    for (var = 0; var < s->cap; var++){
         s->decisions    [var] = false;
         s->assigns      [var] = l_Undef;
         s->levels       [var] = -1;
@@ -188,7 +188,6 @@ bool solver_addclause(solver* s, lit* begin, lit* end)
 
     if (begin == end) return false; // Empty clause
 
-    //if(DEBUG){printlits(begin,end); printf("\n");}
     // insertion sort
     maxvar = lit_var(*begin);
     for (i = begin + 1; i < end; i++){
@@ -198,12 +197,13 @@ bool solver_addclause(solver* s, lit* begin, lit* end)
             *j = *(j-1);
         *j = l;
     }
+
     solver_setnvars(s,maxvar+1);
 
     if(DEBUG){printf("Adding clause\n");printvalues(begin,end); printf("\n");}
 
     // create new clause
-    vecp_push(&s->clauses,clause_new(s,begin,end,0));
+    vecp_push(&s->clauses,clause_new(s,begin,end));
     s->tail++;  // tail == # of clauses at first.
 
     return true;
@@ -223,7 +223,6 @@ bool update_counts(solver* s)
       c = vecp_begin(&s->clauses)[i];
       for(j = 0; j < clause_size(c); j++) {
          // A true literal should not be in the working set of clauses!
-         if(DEBUG) printf("Checking if assignment for s->assigns[%d] is %d\n",c->lits[j],l_True);
          if(s->assigns[c->lits[j]] == l_True) return false;
          else if(s->assigns[c->lits[j]] == l_Undef) // Only count if not False
             s->counts[c->lits[j]]++;
@@ -286,6 +285,7 @@ bool propagate_decision(solver* s, lit decision, bool new_level){
                printf("\n");
             }
             if(s->tail == 1) {
+               s->tail--;
                s->satisfied = true;
                return true;
             }
@@ -344,6 +344,7 @@ bool backtrack(solver* s, lit* decision) {
          lev_choice = backtrack_once(s);
       }
    *decision = lit_neg(lev_choice);
+   if(DEBUG) printf("Backtracked to level %d where level choice was %d\n",s->cur_level,lev_choice);
    assert(s->decisions[lev_choice] == true);
    assert(s->decisions[lit_neg(lev_choice)] == false);
    return true;
@@ -379,6 +380,7 @@ bool propagate_units(solver* s){
    if(DEBUG) printf("In propagate_units, trying to find a unit clause. Tail is %d, level is %d\n",s->tail,s->cur_level);
    while(find_unit(s, &unit_lit)){
       if(!propagate_decision(s,unit_lit,false)) return false; // CONFLICT
+      if(s->tail == 0) return true; // SATISFIED
       if(DEBUG) printf("In propagate_units, no conflict after propagating unit clause decision! Checking again... Tail is %d, level is %d\n", s->tail, s->cur_level);
    }
    if(DEBUG) printf("In propagate_units, no more unit clauses found! Tail is %d, level is %d\n",s->tail,s->cur_level);
@@ -389,19 +391,13 @@ bool propagate_units(solver* s){
 bool solver_solve(solver* s){
    lit decision;
    bool forced = false;
-   if(DEBUG){
-      printf("I'm inside solver_solve. printing out list of s->assigns before anything else is done.\n");
-      int i;
-      for(i = 0; i<s->size*2; i++) {
-         printf("s->assigns[%d] = %d\n",i,s->assigns[i]);
-      }
-   }
+
    while(true) {
       if(DEBUG) printf("Making a decision... it is%sforced\n",forced?" ":" NOT ");
       // pick a variable to decide on (based on counts)
       if(!forced) {decision = make_decision(s);}
       else forced = false;
-      if(DEBUG) printf("Decision is %d\n",decision);
+      if(DEBUG) printf("Decision is %d at level %d\n",decision,s->cur_level);
       if(!propagate_decision(s, decision, true)){
          // CONFLICT
          if(DEBUG) printf("In solver_solve, after level decision, found conflict. Backtracking.\nTail is %d and level is %d\n",s->tail,s->cur_level);
