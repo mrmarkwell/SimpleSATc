@@ -77,9 +77,7 @@ struct solver_t
    bool satisfied;      // false if function is not satisfied
    vecp  clauses;       // vector of pointers to all clauses
    bool*  decisions;    // array of decisions to variables (use this to determine which directions
-                        // down the tree you've gone. !!only make l_True!! l_Undef indicates this
-                        // decision has not yet been made
-
+                        // down the tree you've gone. Make true on level decisions only
    lit*   level_choice; // only one variable assignment is selected per level.
                         // The other level decisions are required by the unit clause rule.
                         // This array keeps track of which choice was made at each level

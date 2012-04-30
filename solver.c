@@ -215,7 +215,7 @@ bool update_counts(solver* s)
    int i,j;
    clause* c;
    // reset all counts to 0 initially
-   for(i = 0; i < (s->size)*2; i++) {
+   for(i = 0; i < s->size*2; i++) {
       s->counts[i] = 0;
    }
    // now recount
@@ -223,9 +223,9 @@ bool update_counts(solver* s)
       c = vecp_begin(&s->clauses)[i];
       for(j = 0; j < clause_size(c); j++) {
          // A true literal should not be in the working set of clauses!
+         if(DEBUG) printf("Checking if assignment for s->assigns[%d] is %d\n",c->lits[j],l_True);
          if(s->assigns[c->lits[j]] == l_True) return false;
-         else
-            if(s->assigns[c->lits[j]] == l_Undef) // Only count if not False
+         else if(s->assigns[c->lits[j]] == l_Undef) // Only count if not False
             s->counts[c->lits[j]]++;
       }
    }
@@ -263,6 +263,7 @@ bool propagate_decision(solver* s, lit decision, bool new_level){
 
 
    if(new_level){
+      if(DEBUG) printf("It is a level decision\n");
       s->cur_level++;
       s->level_choice[s->cur_level] = decision;
       s->decisions[decision] = true;// only change 'decisions' on level decisions.
@@ -276,7 +277,6 @@ bool propagate_decision(solver* s, lit decision, bool new_level){
       for(j = 0; j < clause_size(c); j++){
          if(j == 0) false_count = 0;
          if(s->assigns[c->lits[j]] == l_False) {
-            printf("Found a false assignment, %d, now incrementing false_count from %d\n",c->lits[j],false_count);
             false_count++;
          }
          else if(s->assigns[c->lits[j]] == l_True) {
@@ -297,11 +297,14 @@ bool propagate_decision(solver* s, lit decision, bool new_level){
          }
          if(false_count == clause_size(c)) {
             no_conflict = false; //Conflict found!
-            if(DEBUG) printf("Found a conflict, false_count = %d\n",false_count);
+            if(DEBUG) {
+               printf("Found a CONFLICT, false_count = %d and clause is:\n",false_count);
+               printvalues(c->lits, c->lits + c->size);
+               printf("\n");
+            }
          }
       }
    }
-
    return no_conflict;
 }
 
@@ -330,47 +333,96 @@ lit backtrack_once(solver* s){
 
 }
 
+// returns true if backtrack worked, false if top of tree is hit (UNSATISFIABLE)
 bool backtrack(solver* s, lit* decision) {
 // CONFLICT FOUND
-         lit lev_choice = backtrack_once(s);
-            while(s->decisions[lit_neg(lev_choice)] == l_True && s->decisions[lev_choice] == l_True) {
-               if(s->cur_level == 0) { return false;} //UNSATISFIABLE
-               s->decisions[lit_neg(lev_choice)] = l_Undef;
-               s->decisions[lev_choice] = l_Undef;
-               lev_choice = backtrack_once(s);
-            }
-         decision = lit_neg(lev_choice);
-         forced = true;
-//         continue;
-
-
-
+   lit lev_choice = backtrack_once(s);
+      while(s->decisions[lit_neg(lev_choice)] == true && s->decisions[lev_choice] == true) {
+         if(s->cur_level == 0) { return false;} //UNSATISFIABLE
+         s->decisions[lit_neg(lev_choice)] = false;
+         s->decisions[lev_choice] = false;
+         lev_choice = backtrack_once(s);
+      }
+   *decision = lit_neg(lev_choice);
+   assert(s->decisions[lev_choice] == true);
+   assert(s->decisions[lit_neg(lev_choice)] == false);
+   return true;
 }
+
+// finds a unit clause if there is one.  Returns true if so, where unit_lit is the literal in that clause.
+bool find_unit(solver* s, lit* unit_lit){
+   int i,j, false_count;
+   clause* c;
+
+   for(i = 0; i < s->tail; i++){
+      c = vecp_begin(&s->clauses)[i];
+      for(j = 0; j < clause_size(c); j++){
+         if(j == 0) false_count = 0;
+         assert(s->assigns[c->lits[j]] != l_True);
+         if(s->assigns[c->lits[j]] == l_False) false_count++;
+         else *unit_lit = c->lits[j]; // If this is a unit clause, this will be the unit lit.
+         if(j == clause_size(c) - 1 && false_count == clause_size(c) - 1) {
+            if(DEBUG) {
+               printf("In find_unit, found a unit clause! Literal is %d, and clause is:\n",*unit_lit);
+               printvalues(c->lits,c->lits + c->size);
+               printf("\n");
+            }
+            return true; //UNIT CLAUSE!
+         }
+      }
+   }
+   return false; // NO UNIT CLAUSES
+}
+// returns false if conflict is found.  True if not, or solved.
+bool propagate_units(solver* s){
+   lit unit_lit;
+   if(DEBUG) printf("In propagate_units, trying to find a unit clause. Tail is %d, level is %d\n",s->tail,s->cur_level);
+   while(find_unit(s, &unit_lit)){
+      if(!propagate_decision(s,unit_lit,false)) return false; // CONFLICT
+      if(DEBUG) printf("In propagate_units, no conflict after propagating unit clause decision! Checking again... Tail is %d, level is %d\n", s->tail, s->cur_level);
+   }
+   if(DEBUG) printf("In propagate_units, no more unit clauses found! Tail is %d, level is %d\n",s->tail,s->cur_level);
+   return true;
+}
+
 
 bool solver_solve(solver* s){
    lit decision;
    bool forced = false;
-
+   if(DEBUG){
+      printf("I'm inside solver_solve. printing out list of s->assigns before anything else is done.\n");
+      int i;
+      for(i = 0; i<s->size*2; i++) {
+         printf("s->assigns[%d] = %d\n",i,s->assigns[i]);
+      }
+   }
    while(true) {
-
+      if(DEBUG) printf("Making a decision... it is%sforced\n",forced?" ":" NOT ");
       // pick a variable to decide on (based on counts)
       if(!forced) {decision = make_decision(s);}
       else forced = false;
+      if(DEBUG) printf("Decision is %d\n",decision);
       if(!propagate_decision(s, decision, true)){
          // CONFLICT
+         if(DEBUG) printf("In solver_solve, after level decision, found conflict. Backtracking.\nTail is %d and level is %d\n",s->tail,s->cur_level);
          if(!backtrack(s,&decision)) return false;//UNSATISFIABLE
          else{ //Backtrack worked, decision must be forced
+            if(DEBUG) printf("backtrack worked, tail is now %d and level is %d\n",s->tail,s->cur_level);
             forced = true;
             continue;
          }
       }
       else {
          // NO CONFLICT
+         if(DEBUG) printf("In solver_solve, after level decision, NO CONFLICT. Tail is %d and level is %d\n",s->tail,s->cur_level);
          if(s->satisfied) return true;
+         if(DEBUG) printf("Entering propagate_units.\n");
          if(!propagate_units(s)){
             // CONFLICT
+            if(DEBUG) printf("In solver_solve, after propagate_units, found conflict. Backtracking.\nTail is %d and level is %d\n",s->tail,s->cur_level);
             if(!backtrack(s, &decision)) return false; //UNSATISFIABLE
             else {
+               if(DEBUG) printf("backtrack due to propagate_units worked, tail is now %d and level is %d\n",s->tail,s->cur_level);
                forced = true;
                continue;
             }
