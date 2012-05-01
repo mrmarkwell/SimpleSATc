@@ -1,6 +1,19 @@
-SimpleSATc
-=====================================================
+SimpleSATc v1.0
+=================================================================
 
-This program is a simple SAT solver using the DPLL algorithm.  It was developed by Matthew Markwell for use by Shivam Malhotra at Purdue University.
+This program is a simple SAT solver using the DPLL algorithm.
+It was developed by Matthew Markwell for use by Shivam Malhotra
+   at Purdue University.
 
-=====================================================
+To compile, type "make". To run, type "./SimpleSATc filename.cnf"
+   where filename.cnf is an input file in DIMACS Conjunctive
+   Normal Form.  The result of the computation is appended to
+   the file "SimpleSATc.out", which displays either UNSATISFIABLE
+   if the cnf has no solution, or SATISFIABLE as well as a
+   satisfying variable assignment if a solution does exist.
+
+The parser for this SAT solver was copied with permission from
+   MiniSat-C v1.14.1
+
+http://www.cs.chalmers.se/Cs/Research/FormalMethods/MiniSat/
+=================================================================

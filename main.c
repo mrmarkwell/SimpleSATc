@@ -150,10 +150,10 @@ int main(int argc, char** argv)
       fprintf(out,"Result: SATISFIABLE\n");
       fprintf(out,"Satisfying Solution:\n");
       printsolution(s,out);
-      fprintf(out, "\n\n\n\n");
+      fprintf(out, "\n\n\n\n\n\n");
    }
    else {
-      fprintf(out,"Result: UNSATISFIABLE\n\n\n\n");
+      fprintf(out,"Result: UNSATISFIABLE\n\n\n\n\n\n");
    }
 
    //if(DEBUG) {
