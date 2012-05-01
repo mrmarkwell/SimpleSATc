@@ -163,7 +163,11 @@ int main(int argc, char** argv)
    //     printf("counts[%d] = %d\n", i, s->counts[i]);
    //   }
    //}
-   if(DEBUG) {printf("final tail position is: %d\n",s->tail);}
+   if(DEBUG) {
+      printf("Final status of solver:\n");
+      printsolver(s);
+      printclauses(s);
+   }
    fclose(out);
    solver_delete(s);
    return 0;

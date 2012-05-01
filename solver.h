@@ -57,6 +57,8 @@ extern void    printsolution(solver* s, FILE* out);
 extern solver* solver_new(void);
 extern void    solver_delete(solver* s);
 
+extern void    printsolver(solver* s);
+extern void    printclauses(solver* s);
 extern bool    solver_addclause(solver* s, lit* begin, lit* end);
 
 extern void    solver_setnvars(solver* s,int n);
@@ -83,7 +85,7 @@ struct solver_t
                         // This array keeps track of which choice was made at each level
 
    lbool*  assigns;     // this is the current list of assignments (if a solution is found, this
-                        //array has the solution in it)
+                        // array has the solution in it)
 
    int*  levels;        // level that each lit was assigned
    int*  counts;        // number of occurrences of each literal

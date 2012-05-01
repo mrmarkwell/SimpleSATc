@@ -46,6 +46,19 @@ static void printvalues(lit* begin, lit* end)
         printf("%d ",begin[i]);
 }
 
+void printsolver(solver* s)
+{
+   int i;
+   printf("Printing solver:\n");
+   printf("size: %d\tcap: %d\ttail: %d\tcur_level: %d\tsatisfied: %d\t\n",s->size,s->cap,s->tail,s->cur_level,s->satisfied);
+   for(i = 0; i < s->size*2; i++){
+      printf("decisions[%d] = %d\tassigns[%d] = %d  \tlevels[%d] = %d  \tcounts[%d] = %d\n",i,s->decisions[i],i,s->assigns[i],i,s->levels[i],i,s->counts[i]);
+   }
+   for(i = 0; i <= s->cur_level; i++){
+      printf("level_choice[%d] = %d\n",i,s->level_choice[i]);
+   }
+   printf("\n");
+}
 
 //=================================================================================================
 // Clause struct and associated functions
@@ -61,6 +74,19 @@ static inline int   clause_size       (clause* c)          { return c->size; }
 static inline lit*  clause_begin      (clause* c)          { return c->lits; }
 static inline int   clause_level      (clause* c)          { return c->level_sat; }
 
+void printclauses(solver* s)
+{
+   int i;
+   clause* c;
+   printf("Printing clauses:\n");
+   for(i = 0; i < vecp_size(&s->clauses); i++){
+      c = vecp_begin(&s->clauses)[i];
+      printf("Clause %d:\t\t",i);
+      printvalues(c->lits,c->lits + c->size);
+      printf("\t\tsize: %d\tlevel_sat: %d\n",c->size,c->level_sat);
+   }
+}
+
 //=================================================================================================
 // Clause functions:
 
@@ -70,7 +96,7 @@ static clause* clause_new(solver* s, lit* begin, lit* end)
     clause* c;
     int i;
 
-    assert(end - begin > 1);
+    //assert(end - begin > 1);
     size           = end - begin;
     c              = (clause*)malloc(sizeof(clause) + sizeof(lit) * size);
 
@@ -197,10 +223,9 @@ bool solver_addclause(solver* s, lit* begin, lit* end)
             *j = *(j-1);
         *j = l;
     }
-
+    if(DEBUG && s->size == 0) printf("Adding clauses:\n");
     solver_setnvars(s,maxvar+1);
-
-    if(DEBUG){printf("Adding clause\n");printvalues(begin,end); printf("\n");}
+    if(DEBUG){printvalues(begin,end); printf("\n");}
 
     // create new clause
     vecp_push(&s->clauses,clause_new(s,begin,end));
@@ -284,6 +309,7 @@ bool propagate_decision(solver* s, lit decision, bool new_level){
                printvalues(c->lits, c->lits + c->size);
                printf("\n");
             }
+            c->level_sat = s->cur_level;
             if(s->tail == 1) {
                s->tail--;
                s->satisfied = true;
@@ -291,7 +317,6 @@ bool propagate_decision(solver* s, lit decision, bool new_level){
             }
             vecp_begin(&s->clauses)[i] = vecp_begin(&s->clauses)[--s->tail];
             vecp_begin(&s->clauses)[s->tail] = c;
-            c->level_sat = s->cur_level;
             i = i--; // be sure to check the current i again - it isn't the same one it was!
             break;
          }
@@ -311,13 +336,13 @@ bool propagate_decision(solver* s, lit decision, bool new_level){
 // returns the level_choice of the level backtracked to
 lit backtrack_once(solver* s){
    int i;
-   lit lev_choice;
    clause* c;
 
    for(i = 0; i < s->size*2; i++){
       if(s->levels[i] == s->cur_level){
          s->assigns[i] = l_Undef;
          s->assigns[lit_neg(i)] = l_Undef;
+         s->levels[i] = -1;
       }
    }
    for(i = s->tail; i < vecp_size(&s->clauses); i++){
@@ -336,15 +361,16 @@ lit backtrack_once(solver* s){
 // returns true if backtrack worked, false if top of tree is hit (UNSATISFIABLE)
 bool backtrack(solver* s, lit* decision) {
 // CONFLICT FOUND
+   if(s->cur_level == 0 && s->decisions[lit_neg(s->level_choice[0])] == true) return false; //UNSATISFIABLE (boundary case)
    lit lev_choice = backtrack_once(s);
       while(s->decisions[lit_neg(lev_choice)] == true && s->decisions[lev_choice] == true) {
-         if(s->cur_level == 0) { return false;} //UNSATISFIABLE
+         if(s->cur_level+1 == 0) { return false;} //UNSATISFIABLE
          s->decisions[lit_neg(lev_choice)] = false;
          s->decisions[lev_choice] = false;
          lev_choice = backtrack_once(s);
       }
    *decision = lit_neg(lev_choice);
-   if(DEBUG) printf("Backtracked to level %d where level choice was %d\n",s->cur_level,lev_choice);
+   if(DEBUG) printf("Backtracked to level %d where level choice was %d\n",s->cur_level+1,lev_choice);
    assert(s->decisions[lev_choice] == true);
    assert(s->decisions[lit_neg(lev_choice)] == false);
    return true;
@@ -391,13 +417,21 @@ bool propagate_units(solver* s){
 bool solver_solve(solver* s){
    lit decision;
    bool forced = false;
+   int timer = 0;
 
    while(true) {
       if(DEBUG) printf("Making a decision... it is%sforced\n",forced?" ":" NOT ");
+      if(DEBUGLITE){
+         timer++;
+         if(timer == 100000) {
+            printsolver(s);
+            timer = 0;
+         }
+      }
       // pick a variable to decide on (based on counts)
       if(!forced) {decision = make_decision(s);}
       else forced = false;
-      if(DEBUG) printf("Decision is %d at level %d\n",decision,s->cur_level);
+      if(DEBUG) printf("Decision is %d at level %d\n",decision,s->cur_level+1);
       if(!propagate_decision(s, decision, true)){
          // CONFLICT
          if(DEBUG) printf("In solver_solve, after level decision, found conflict. Backtracking.\nTail is %d and level is %d\n",s->tail,s->cur_level);
@@ -428,7 +462,9 @@ bool solver_solve(solver* s){
             if(s->satisfied) return true;
          }
       }
+      if(DEBUG) printsolver(s);
    }
+   return true;
 }
 
 
