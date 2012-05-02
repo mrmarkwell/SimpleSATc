@@ -24,10 +24,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #include <stdlib.h>
 
-#define DEBUG 0      // Full debug output
-#define DEBUGLITE 0  // Output of solver only after many iterations.
-                     // Helpful for really difficult inputs (to see progress).
-
 // vector of 32-bit intergers (added for 64-bit portability)
 struct veci_t {
     int    size;

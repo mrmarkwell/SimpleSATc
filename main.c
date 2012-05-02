@@ -141,7 +141,6 @@ int main(int argc, char** argv)
      exit(20);
    }
 
-   if(DEBUG) {printf("Solver size: %d Tail: %d\nBeginning solver_solve\n",s->size,s->tail);}
    st = solver_solve(s);
 
    fprintf(out,"################################# SimpleSATc #################################\n");
@@ -157,12 +156,6 @@ int main(int argc, char** argv)
       fprintf(out,"Result: UNSATISFIABLE\n\n\n\n\n\n");
    }
 
-
-   if(DEBUG) {
-      printf("Final status of solver:\n");
-      printsolver(s);
-      printclauses(s);
-   }
    fclose(out);
    solver_delete(s);
    return 0;
