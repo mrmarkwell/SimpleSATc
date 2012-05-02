@@ -152,17 +152,12 @@ int main(int argc, char** argv)
       printsolution(s,out);
       fprintf(out, "\n\n\n\n\n\n");
    }
+
    else {
       fprintf(out,"Result: UNSATISFIABLE\n\n\n\n\n\n");
    }
 
-   //if(DEBUG) {
-   //   int i;
-   //   printf("Values in 'counts':\n");
-   //   for (i = 0; i < (s->size)*2; i++) {
-   //     printf("counts[%d] = %d\n", i, s->counts[i]);
-   //   }
-   //}
+
    if(DEBUG) {
       printf("Final status of solver:\n");
       printsolver(s);

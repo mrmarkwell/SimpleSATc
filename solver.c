@@ -96,7 +96,6 @@ static clause* clause_new(solver* s, lit* begin, lit* end)
     clause* c;
     int i;
 
-    //assert(end - begin > 1);
     size           = end - begin;
     c              = (clause*)malloc(sizeof(clause) + sizeof(lit) * size);
 
@@ -290,7 +289,7 @@ bool propagate_decision(solver* s, lit decision, bool new_level){
       if(DEBUG) printf("It is a level decision\n");
       s->cur_level++;
       s->level_choice[s->cur_level] = decision;
-      s->decisions[decision] = true;// only change 'decisions' on level decisions.
+      s->decisions[decision] = true;  // only change 'decisions' on level decisions.
    }
    s->levels[decision] = s->cur_level;
    s->assigns[decision] = l_True;
